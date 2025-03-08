@@ -32,10 +32,7 @@ struct StopwatchApp: App {
         .commands {
             CommandGroup(after: .appSettings) {
                 Button("Toggle Fullscreen") {
-                    guard let window = (NSApp.delegate as? AppDelegate)?.window else {
-                        return
-                    }
-                    window.toggleFullScreen(nil)
+                    NotificationCenter.default.post(name: NSNotification.Name("ToggleFullscreen"), object: nil)
                 }
                 .keyboardShortcut("f", modifiers: [.command])
                 

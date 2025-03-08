@@ -187,6 +187,10 @@ struct ContentView: View {
             NotificationCenter.default.addObserver(forName: NSNotification.Name("RecordLap"), object: nil, queue: .main) { _ in
                 stopwatchManager.recordLap()
             }
+            
+            NotificationCenter.default.addObserver(forName: NSNotification.Name("ToggleFullscreen"), object: nil, queue: .main) { _ in
+                toggleFullscreen()
+            }
         }
         .onDisappear {
             // Remove observers when view disappears
@@ -195,7 +199,12 @@ struct ContentView: View {
     }
     
     private func toggleFullscreen() {
-        if let window = (NSApp.delegate as? AppDelegate)?.window {
+        // Access the window through NSApplication for more reliability
+        if let window = (NSApplication.shared.delegate as? AppDelegate)?.window {
+            window.toggleFullScreen(nil)
+            isFullscreen.toggle()
+        } else if let window = NSApplication.shared.mainWindow {
+            // Fallback to mainWindow if we can't get it through the delegate
             window.toggleFullScreen(nil)
             isFullscreen.toggle()
         }
