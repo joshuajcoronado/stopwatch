@@ -50,7 +50,6 @@ struct ContentView: View {
                                 .clipShape(Circle())
                         }
                         .buttonStyle(PlainButtonStyle())
-                        .keyboardShortcut("r", modifiers: [])
                         
                         Text("R")
                             .font(.system(size: min(geometry.size.width * 0.012, 10), weight: .bold))
@@ -90,7 +89,6 @@ struct ContentView: View {
                                 )
                         }
                         .buttonStyle(PlainButtonStyle())
-                        .keyboardShortcut(.space, modifiers: [])
                         
                         Text("SPACE")
                             .font(.system(size: min(geometry.size.width * 0.012, 10), weight: .bold))
@@ -108,7 +106,6 @@ struct ContentView: View {
                                 .clipShape(Circle())
                         }
                         .buttonStyle(PlainButtonStyle())
-                        .keyboardShortcut("l", modifiers: [])
                         
                         Text("L")
                             .font(.system(size: min(geometry.size.width * 0.012, 10), weight: .bold))
@@ -164,7 +161,6 @@ struct ContentView: View {
                         }
                     }
                     .buttonStyle(PlainButtonStyle())
-                    .keyboardShortcut("f", modifiers: [.command])
                     .padding()
                 }
             }
@@ -172,43 +168,40 @@ struct ContentView: View {
             }
         }
         .onAppear {
-            NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-                // Handle keyboard shortcuts
-                if let chars = event.charactersIgnoringModifiers {
-                    if chars == " " { // Space bar
-                        // Trigger visual space bar animation
-                        withAnimation(.easeInOut(duration: 0.1)) {
-                            spacebarPressed = true
-                        }
-                        
-                        stopwatchManager.toggleRunning()
-                        
-                        // Reset animation after a short delay
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                            withAnimation(.easeInOut(duration: 0.1)) {
-                                spacebarPressed = false
-                            }
-                        }
-                        
-                        return nil // Consume the event
-                    } else if chars.lowercased() == "r" {
-                        stopwatchManager.reset()
-                        return nil
-                    } else if chars.lowercased() == "l" {
-                        stopwatchManager.recordLap()
-                        return nil
-                    } else if chars.lowercased() == "f" && event.modifierFlags.contains(.command) {
-                        toggleFullscreen()
-                        return nil
+            // Set up notification observers for keyboard shortcuts
+            NotificationCenter.default.addObserver(forName: NSNotification.Name("ToggleStopwatch"), object: nil, queue: .main) { _ in
+                // Trigger visual space bar animation
+                withAnimation(.easeInOut(duration: 0.1)) {
+                    spacebarPressed = true
+                }
+                
+                stopwatchManager.toggleRunning()
+                
+                // Reset animation after a short delay
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                    withAnimation(.easeInOut(duration: 0.1)) {
+                        spacebarPressed = false
                     }
                 }
-                return event
             }
+            
+            NotificationCenter.default.addObserver(forName: NSNotification.Name("ResetStopwatch"), object: nil, queue: .main) { _ in
+                stopwatchManager.reset()
+            }
+            
+            NotificationCenter.default.addObserver(forName: NSNotification.Name("RecordLap"), object: nil, queue: .main) { _ in
+                stopwatchManager.recordLap()
+            }
+        }
+        .onDisappear {
+            // Remove observers when view disappears
+            NotificationCenter.default.removeObserver(self)
         }
     }
     
     private func toggleFullscreen() {
-        if let window = NSApplication.shared.windows.first {
+        if let appDelegate = NSApplication.shared.delegate as? AppDelegate,
+           let window = appDelegate.window {
             window.toggleFullScreen(nil)
             isFullscreen.toggle()
         }

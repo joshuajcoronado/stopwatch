@@ -93,3 +93,4 @@ class StopwatchManager: ObservableObject {
         formattedElapsedTime = String(format: "%02d:%02d.%02d", minutes, seconds, hundredths)
     }
 }
+
