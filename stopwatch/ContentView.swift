@@ -13,8 +13,24 @@ struct ContentView: View {
     
     var body: some View {
         ZStack {
-            // Background
+            // Background with tap gesture to toggle stopwatch
             Color.black.edgesIgnoringSafeArea(.all)
+                .contentShape(Rectangle()) // Make entire area tappable
+                .onTapGesture {
+                    // Trigger visual space bar animation
+                    withAnimation(.easeInOut(duration: 0.1)) {
+                        spacebarPressed = true
+                    }
+                    
+                    stopwatchManager.toggleRunning()
+                    
+                    // Reset animation after a short delay
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                        withAnimation(.easeInOut(duration: 0.1)) {
+                            spacebarPressed = false
+                        }
+                    }
+                }
             
             GeometryReader { geometry in
                 VStack(spacing: geometry.size.height * 0.05) {
