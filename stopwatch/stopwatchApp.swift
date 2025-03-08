@@ -18,17 +18,16 @@ struct StopwatchApp: App {
                     if let window = NSApplication.shared.windows.first {
                         window.orderOut(nil)
                     }
-                    if let delegateWindow = appDelegate.window {
-                        delegateWindow.makeKeyAndOrderFront(nil)
+                    // Only try to access delegate window if appDelegate is initialized
+                    if appDelegate.window != nil {
+                        appDelegate.window?.makeKeyAndOrderFront(nil)
                     }
                 }
         }
         .commands {
             CommandGroup(after: .appSettings) {
                 Button("Toggle Fullscreen") {
-                    if let window = appDelegate.window {
-                        window.toggleFullScreen(nil)
-                    }
+                    appDelegate.window?.toggleFullScreen(nil)
                 }
                 .keyboardShortcut("f", modifiers: [.command])
                 
