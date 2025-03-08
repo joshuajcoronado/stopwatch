@@ -2,7 +2,7 @@
 
 A minimalist, fullscreen stopwatch application for macOS built with Swift and SwiftUI.
 
-![Stopwatch Demo](screenshot-placeholder.png)
+![Stopwatch](screenshot.png)
 
 ## Features
 
