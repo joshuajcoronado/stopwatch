@@ -18,9 +18,11 @@ struct StopwatchApp: App {
                     if let window = NSApplication.shared.windows.first {
                         window.orderOut(nil)
                     }
-                    // Only try to access delegate window if appDelegate is initialized
-                    if appDelegate.window != nil {
-                        appDelegate.window?.makeKeyAndOrderFront(nil)
+                    // Make sure window is properly created before accessing it
+                    DispatchQueue.main.async {
+                        if let window = self.appDelegate.window {
+                            window.makeKeyAndOrderFront(nil)
+                        }
                     }
                 }
         }

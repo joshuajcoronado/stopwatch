@@ -16,6 +16,7 @@ struct ContentView: View {
             // Background with tap gesture to toggle stopwatch
             Color.black.edgesIgnoringSafeArea(.all)
                 .contentShape(Rectangle()) // Make entire area tappable
+                .allowsHitTesting(true) // Ensure hits are detected even during movement
                 .onTapGesture {
                     // Trigger visual space bar animation
                     withAnimation(.easeInOut(duration: 0.1)) {
