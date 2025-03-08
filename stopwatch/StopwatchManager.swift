@@ -36,12 +36,14 @@ class StopwatchManager: ObservableObject {
             startTime = Date()
             
             // Use a high-precision timer for smoother updates
-            timer = Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true) { [weak self] _ in
-                self?.updateElapsedTime()
+            timer = Timer(timeInterval: 0.01, repeats: true) { [weak self] _ in
+                DispatchQueue.main.async {
+                    self?.updateElapsedTime()
+                }
             }
             
             // Make sure the timer fires even during tracking events like scrolling
-            RunLoop.current.add(timer!, forMode: .common)
+            RunLoop.main.add(timer!, forMode: .common)
         }
     }
     

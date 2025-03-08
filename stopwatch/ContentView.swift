@@ -14,24 +14,20 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             // Background with tap gesture to toggle stopwatch
-            Color.black.edgesIgnoringSafeArea(.all)
+            Rectangle()
+                .fill(Color.black)
+                .edgesIgnoringSafeArea(.all)
                 .contentShape(Rectangle()) // Make entire area tappable
-                .allowsHitTesting(true) // Ensure hits are detected even during movement
                 .onTapGesture {
-                    // Trigger visual space bar animation
-                    withAnimation(.easeInOut(duration: 0.1)) {
-                        spacebarPressed = true
-                    }
-                    
-                    stopwatchManager.toggleRunning()
-                    
-                    // Reset animation after a short delay
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                        withAnimation(.easeInOut(duration: 0.1)) {
-                            spacebarPressed = false
-                        }
-                    }
+                    handleTapAction()
                 }
+                // Add a second gesture recognizer for better responsiveness
+                .gesture(
+                    DragGesture(minimumDistance: 0)
+                        .onEnded { _ in
+                            handleTapAction()
+                        }
+                )
             
             GeometryReader { geometry in
                 VStack(spacing: geometry.size.height * 0.05) {
@@ -71,22 +67,13 @@ struct ContentView: View {
                         Text("R")
                             .font(.system(size: min(geometry.size.width * 0.012, 10), weight: .bold))
                             .foregroundColor(.gray)
+                            .help("Press R to reset the stopwatch")
                     }
                     
                     // Start/Stop Button
                     VStack(spacing: 5) {
                         Button(action: {
-                            withAnimation(.easeInOut(duration: 0.1)) {
-                                spacebarPressed = true
-                            }
-                            stopwatchManager.toggleRunning()
-                            
-                            // Reset the animation after a short delay
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                                withAnimation(.easeInOut(duration: 0.1)) {
-                                    spacebarPressed = false
-                                }
-                            }
+                            handleTapAction()
                         }) {
                             Image(systemName: stopwatchManager.isRunning ? "pause.fill" : "play.fill")
                                 .font(.system(size: primaryIconSize))
@@ -110,6 +97,7 @@ struct ContentView: View {
                         Text("SPACE")
                             .font(.system(size: min(geometry.size.width * 0.012, 10), weight: .bold))
                             .foregroundColor(.gray)
+                            .help("Press SPACE to start/stop the stopwatch")
                     }
                     
                     // Lap Button
@@ -127,6 +115,7 @@ struct ContentView: View {
                         Text("L")
                             .font(.system(size: min(geometry.size.width * 0.012, 10), weight: .bold))
                             .foregroundColor(.gray)
+                            .help("Press L to record a lap")
                     }
                 }
                 .padding(.vertical, geometry.size.height * 0.03)
@@ -175,6 +164,7 @@ struct ContentView: View {
                             Text("⌘F")
                                 .font(.system(size: min(geometry.size.width * 0.012, 10), weight: .bold))
                                 .foregroundColor(.gray)
+                                .help("Press Command+F to toggle fullscreen")
                         }
                     }
                     .buttonStyle(PlainButtonStyle())
@@ -187,19 +177,7 @@ struct ContentView: View {
         .onAppear {
             // Set up notification observers for keyboard shortcuts
             NotificationCenter.default.addObserver(forName: NSNotification.Name("ToggleStopwatch"), object: nil, queue: .main) { _ in
-                // Trigger visual space bar animation
-                withAnimation(.easeInOut(duration: 0.1)) {
-                    spacebarPressed = true
-                }
-                
-                stopwatchManager.toggleRunning()
-                
-                // Reset animation after a short delay
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                    withAnimation(.easeInOut(duration: 0.1)) {
-                        spacebarPressed = false
-                    }
-                }
+                handleTapAction()
             }
             
             NotificationCenter.default.addObserver(forName: NSNotification.Name("ResetStopwatch"), object: nil, queue: .main) { _ in
@@ -217,10 +195,26 @@ struct ContentView: View {
     }
     
     private func toggleFullscreen() {
-        if let appDelegate = NSApplication.shared.delegate as? AppDelegate,
-           let window = appDelegate.window {
+        if let window = (NSApp.delegate as? AppDelegate)?.window {
             window.toggleFullScreen(nil)
             isFullscreen.toggle()
+        }
+    }
+    
+    // Centralized handling of tap actions
+    private func handleTapAction() {
+        // Trigger visual space bar animation
+        withAnimation(.easeInOut(duration: 0.1)) {
+            spacebarPressed = true
+        }
+        
+        stopwatchManager.toggleRunning()
+        
+        // Reset animation after a short delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            withAnimation(.easeInOut(duration: 0.1)) {
+                self.spacebarPressed = false
+            }
         }
     }
 }

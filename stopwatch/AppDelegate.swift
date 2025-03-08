@@ -24,7 +24,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.center()
         window.contentView = NSHostingView(rootView: ContentView())
         window.makeKeyAndOrderFront(nil)
-        window.level = .floating // Keep window on top
+        // Use normal window level instead of floating to allow it to go behind other windows
+        window.level = .normal
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenPrimary]
         
         // Set the window to be transparent if needed
