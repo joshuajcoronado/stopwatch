@@ -4,21 +4,213 @@
 //
 //  Created by Joshua Coronado on 3/7/25.
 //
-
 import SwiftUI
 
 struct ContentView: View {
+    @StateObject private var stopwatchManager = StopwatchManager()
+    @State private var isFullscreen = false
+    @State private var spacebarPressed = false // Track spacebar press animation
+    
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        ZStack {
+            // Background
+            Color.black.edgesIgnoringSafeArea(.all)
+            
+            GeometryReader { geometry in
+                VStack(spacing: geometry.size.height * 0.05) {
+                // Stopwatch Display with reactive sizing
+                GeometryReader { geometry in
+                    Text(stopwatchManager.formattedElapsedTime)
+                        .font(.system(
+                            size: min(geometry.size.width * 0.25, geometry.size.height * 0.5),
+                            weight: .thin,
+                            design: .monospaced
+                        ))
+                        .foregroundColor(.white)
+                        .minimumScaleFactor(0.5)
+                        .lineLimit(1)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+                
+                // Controls
+                let buttonSize = min(geometry.size.width * 0.1, geometry.size.height * 0.15)
+                let primaryButtonSize = buttonSize * 1.25
+                let iconSize = buttonSize * 0.4
+                let primaryIconSize = iconSize * 1.25
+                
+                HStack(spacing: geometry.size.width * 0.05) {
+                    // Reset Button
+                    VStack(spacing: 5) {
+                        Button(action: stopwatchManager.reset) {
+                            Image(systemName: "arrow.counterclockwise")
+                                .font(.system(size: iconSize))
+                                .foregroundColor(.white)
+                                .frame(width: buttonSize, height: buttonSize)
+                                .background(Color.gray.opacity(0.3))
+                                .clipShape(Circle())
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .keyboardShortcut("r", modifiers: [])
+                        
+                        Text("R")
+                            .font(.system(size: min(geometry.size.width * 0.012, 10), weight: .bold))
+                            .foregroundColor(.gray)
+                    }
+                    
+                    // Start/Stop Button
+                    VStack(spacing: 5) {
+                        Button(action: {
+                            withAnimation(.easeInOut(duration: 0.1)) {
+                                spacebarPressed = true
+                            }
+                            stopwatchManager.toggleRunning()
+                            
+                            // Reset the animation after a short delay
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                                withAnimation(.easeInOut(duration: 0.1)) {
+                                    spacebarPressed = false
+                                }
+                            }
+                        }) {
+                            Image(systemName: stopwatchManager.isRunning ? "pause.fill" : "play.fill")
+                                .font(.system(size: primaryIconSize))
+                                .foregroundColor(.white)
+                                .frame(width: primaryButtonSize, height: primaryButtonSize)
+                                .background(
+                                    stopwatchManager.isRunning
+                                    ? Color.red.opacity(spacebarPressed ? 0.9 : 0.7)
+                                    : Color.green.opacity(spacebarPressed ? 0.9 : 0.7)
+                                )
+                                .scaleEffect(spacebarPressed ? 1.1 : 1.0)
+                                .clipShape(Circle())
+                                .overlay(
+                                    Circle()
+                                        .stroke(Color.white.opacity(spacebarPressed ? 0.6 : 0), lineWidth: 3)
+                                        .scaleEffect(spacebarPressed ? 1.2 : 1.0)
+                                )
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .keyboardShortcut(.space, modifiers: [])
+                        
+                        Text("SPACE")
+                            .font(.system(size: min(geometry.size.width * 0.012, 10), weight: .bold))
+                            .foregroundColor(.gray)
+                    }
+                    
+                    // Lap Button
+                    VStack(spacing: 5) {
+                        Button(action: stopwatchManager.recordLap) {
+                            Image(systemName: "flag.fill")
+                                .font(.system(size: iconSize))
+                                .foregroundColor(.white)
+                                .frame(width: buttonSize, height: buttonSize)
+                                .background(Color.blue.opacity(0.3))
+                                .clipShape(Circle())
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .keyboardShortcut("l", modifiers: [])
+                        
+                        Text("L")
+                            .font(.system(size: min(geometry.size.width * 0.012, 10), weight: .bold))
+                            .foregroundColor(.gray)
+                    }
+                }
+                .padding(.vertical, geometry.size.height * 0.03)
+                
+                // Laps Display
+                if !stopwatchManager.laps.isEmpty {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: geometry.size.height * 0.015) {
+                            Text("Laps")
+                                .font(.system(size: min(geometry.size.width * 0.02, 16), weight: .bold))
+                                .foregroundColor(.gray)
+                                .padding(.horizontal)
+                            
+                            ForEach(Array(stopwatchManager.laps.enumerated()), id: \.offset) { index, lap in
+                                HStack {
+                                    Text("Lap \(stopwatchManager.laps.count - index)")
+                                        .font(.system(size: min(geometry.size.width * 0.018, 14), design: .monospaced))
+                                        .foregroundColor(.gray)
+                                    
+                                    Spacer()
+                                    
+                                    Text(lap)
+                                        .font(.system(size: min(geometry.size.width * 0.018, 14), design: .monospaced))
+                                        .foregroundColor(.white)
+                                }
+                                .padding(.horizontal)
+                            }
+                        }
+                        .padding()
+                    }
+                    .frame(maxHeight: geometry.size.height * 0.3)
+                }
+                
+                Spacer()
+                
+                // Fullscreen button and keyboard shortcut hint
+                HStack {
+                    Spacer()
+                    
+                    Button(action: toggleFullscreen) {
+                        VStack(spacing: 5) {
+                            Image(systemName: isFullscreen ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
+                                .font(.system(size: min(geometry.size.width * 0.018, 16)))
+                                .foregroundColor(.white)
+                                
+                            Text("⌘F")
+                                .font(.system(size: min(geometry.size.width * 0.012, 10), weight: .bold))
+                                .foregroundColor(.gray)
+                        }
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .keyboardShortcut("f", modifiers: [.command])
+                    .padding()
+                }
+            }
+            .padding()
+            }
         }
-        .padding()
+        .onAppear {
+            NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+                // Handle keyboard shortcuts
+                if let chars = event.charactersIgnoringModifiers {
+                    if chars == " " { // Space bar
+                        // Trigger visual space bar animation
+                        withAnimation(.easeInOut(duration: 0.1)) {
+                            spacebarPressed = true
+                        }
+                        
+                        stopwatchManager.toggleRunning()
+                        
+                        // Reset animation after a short delay
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                            withAnimation(.easeInOut(duration: 0.1)) {
+                                spacebarPressed = false
+                            }
+                        }
+                        
+                        return nil // Consume the event
+                    } else if chars.lowercased() == "r" {
+                        stopwatchManager.reset()
+                        return nil
+                    } else if chars.lowercased() == "l" {
+                        stopwatchManager.recordLap()
+                        return nil
+                    } else if chars.lowercased() == "f" && event.modifierFlags.contains(.command) {
+                        toggleFullscreen()
+                        return nil
+                    }
+                }
+                return event
+            }
+        }
     }
-}
-
-#Preview {
-    ContentView()
+    
+    private func toggleFullscreen() {
+        if let window = NSApplication.shared.windows.first {
+            window.toggleFullScreen(nil)
+            isFullscreen.toggle()
+        }
+    }
 }
