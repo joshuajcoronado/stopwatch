@@ -24,11 +24,6 @@ Stopwatch/
 └── StopwatchManager.swift # Timer logic
 ```
 
-## Requirements
-
-- macOS 11.0 (Big Sur) or later
-- 64-bit processor
-
 ## Usage
 
 - **Starting/Stopping the Timer**: Click the large center button or press the `Space` bar
